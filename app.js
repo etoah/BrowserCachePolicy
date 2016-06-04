@@ -32,6 +32,7 @@ var server = http.createServer(function (request, response) {
             var contentType = mime[ext] || "text/plain";
             cache(request, response);
             fs.readFile(realPath, "binary", function (err, file) {
+                console.log(new Date(),":----read file-----");
 
                 if (err) {
 
