@@ -2,6 +2,17 @@
 ## 浏览器缓存总流程图
 
 
+
+
+总的来说，客户端缓存分三类：
+
+- 不发任何请求，直接从缓存中取数据，代表的特性有： Expires ，Cache-Control=<number>和appcache
+- 发请求确认是否新鲜，再决定是否从缓存中取数据 :代表的特性有：Last-Modified/If-Modified-Since，Etag/If-None-Match
+- 没有缓存，代表的特性有：Cache-Control：max-age=0/no-cache
+
+
+
+
 ## 一步一步说缓存
 
 ### 朴素的静态服务器
