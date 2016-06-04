@@ -148,7 +148,8 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 在浏览器输入：http://localhost:8888/entry.html，可以看到appcache ,已经在缓存文件了：     
 ![img](./assets/appcache.jpg)
 
-这时再刷新浏览器,可以看到即使没有 Expires 和Cache-Control 也是 from cache ,
+这时再刷新浏览器,可以看到即使没有 Expires 和Cache-Control 也是 from cache ,   
+
 ![img](./assets/appcache.header.jpg)
 
 而index.html 由于没有加Expires ，Cache-Control和appcache 还是直接从服务器端取文件。
@@ -157,8 +158,60 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 
 ![img](./assets/norequestcache.png)
 
+本例子的源码为分支 step3
 
-妈蛋！产品又改需求了！下次继续写
+### Last-Modified/If-Modified-Since
+
+Last-Modified/If-Modified-Since要配合Cache-Control使用。
+-  Last-Modified：标示这个响应资源的最后修改时间。web服务器在响应请求时，告诉浏览器资源的最后修改时间。
+-  If-Modified-Since：当资源过期时（使用Cache-Control标识的max-age），发现资源具有Last-Modified声明，则再次向web服务器请求时带上头 If-Modified-Since，表示请求时间。web服务器收到请求后发现有头If-Modified-Since 则与被请求资源的最后修改时间进行比对。若最后修改时间较新，说明资源又被改动过，则响应整片资源内容（写在响应消息包体内），HTTP 200；若最后修改时间较旧，说明资源无新修改，则响应HTTP 304 (无需包体，节省浏览)，告知浏览器继续使用所保存的cache。
+
+所以我们需要把 Cache-Control 设置的尽可能的短,让资源过期:
+```javascript
+
+exports.Expires = {
+
+    fileMatch: /^(gif|png|jpg|js|css|html)$/ig,
+
+    maxAge: 1
+
+};
+
+```
+
+同时需要识别出文件的最后修改时间,并返回给客户端,我们同时也要检测浏览器是否发送了If-Modified-Since请求头。如果发送而且跟文件的修改时间相同的话，我们返回304状态。 
+代码如下：
+
+```javascript
+        fs.stat(realPath, function (err, stat) {
+            var lastModified = stat.mtime.toUTCString();
+            var ifModifiedSince = "If-Modified-Since".toLowerCase();
+            response.setHeader("Last-Modified", lastModified);
+            if (request.headers[ifModifiedSince] && lastModified == request.headers[ifModifiedSince]) {
+                response.writeHead(304, "Not Modified");
+                response.end();
+            }
+        })
+```
+如果没有发送或者跟磁盘上的文件修改时间不相符合，则发送回磁盘上的最新文件。 
+
+同样我们清缓存,刷新两次就能看到效果如下:
+
+![img](./assets/Last-Modified_If-Modified-Since.jpg)
+
+服务器请求确认了文件是否新鲜,直接返回header, 网络负载特别的小:
+
+![img](./assets/304size.jpg)
+
+
+这时我们的缓存控制流程图如下:
+
+![img]("./assets/Last-Modified_If-Modified-Since_flow.png")
+
+
+
+
+
 
 
 
