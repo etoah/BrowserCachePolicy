@@ -199,7 +199,7 @@ exports.Expires = {
 
 ![img](./assets/Last-Modified_If-Modified-Since.jpg)
 
-服务器请求确认了文件是否新鲜,直接返回header, 网络负载特别的小:
+服务器请求确认了文件是否新鲜,直接返回header, 网络负载特别较小:
 
 ![img](./assets/304size.jpg)
 
@@ -216,17 +216,12 @@ exports.Expires = {
 除了有Last-Modified/If-Modified-Since组合，还有Etag/if-None-Match,
 
 #### 什么是Etag
-ETag ,全称Entity Tag.
-
-
-
-Etag/If-None-Match也要配合Cache-Control使用。
--  Etag：web服务器响应请求时，告诉浏览器当前资源在服务器的唯一标识（生成规则由服务器决定）。Apache中，ETag的值，默认是对文件的索引节（INode），大小（Size）和最后修改时间（MTime）进行Hash后得到的。
+ETag ,全称Entity Tag. Etag/If-None-Match也要配合Cache-Control使用。
+-  Etag：web服务器响应请求时，告诉浏览器当前资源在服务器的唯一标识（生成规则由服务器决定，具体下文中介绍）。
 -  If-None-Match：当资源过期时（使用Cache-Control标识的max-age），发现资源具有Etage声明，则再次向web服务器请求时带上头If-None-Match （Etag的值）。
 web服务器收到请求后发现有头If-None-Match 则与被请求资源的相应校验串进行比对，决定返回200或304。
 
 #### 为什么有了Last-Modified还要Etag
-
 
 你可能会觉得使用Last-Modified已经足以让浏览器知道本地的缓存副本是否足够新，为什么还需要Etag（实体标识）呢？HTTP1.1中Etag的出现主要是为了解决几个Last-Modified比较难解决的问题：
 -  Last-Modified标注的最后修改只能精确到秒级，如果某些文件在1秒钟以内，被修改多次的话，它将不能准确标注文件的修改时间
@@ -234,16 +229,49 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 -  有可能存在服务器没有准确获取文件修改时间，或者与代理服务器时间不一致等情形
 
 
+#### Etag 的实现
+
+由上面的目的，很容易想到怎么实现，只要对文件内容哈希即可。
+哈希会用到node 中的Crypto模块 ，先引用`var crypto = require('crypto');`，并在响应时加上Etag:
+
+```javascript
+        var hash = crypto.createHash('md5').update(file).digest('base64');
+                        if (request.headers['if-none-match'] == hash) {
+                            response.writeHead(304, "Not Modified");
+                            response.end();
+                            return;
+                        }
+                        response.writeHead(200, {
+                            'Content-Type': contentType,
+                            "Etag": hash
+                        });
+```
+为了消除 Last-Modified/If-Modified-Since的影响，测试时可以先注释此 header
 
 
 
 
+在node 的后端框架express 中引用的是npm包[etag](https://github.com/jshttp/etag),etag 支持根据传入的参数支持两种etag的方式：
+一种是文件状态（大小，修改时间），另一种是文件内容的哈希值。
+详情可相看[源码](https://github.com/jshttp/etag/blob/master/index.js)
 
 
+
+## 其它
+
+还有一部份功能特性，由于支持度不广（部份浏览器不支持，或主流服务器不支持，如nginx, Appache）没有特别的介绍。
+
+
+
+### 总结
+
+这只是一篇原理或是规则性的文章，但现实应用可能只用到了很少的一部份特性就能达到较好的效果：
+比如，我们只到在打包的时候用gulp生成md5戳或时间戳，过期时间设置为10年，更新版本时更新戳，缓存策略简单高效。
+配置时，也可能不是配置express，很可能配的是nginx ，关于配置的实战篇，下次更新。
  
 
-
-
+Reference
+[W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
 
 
 
