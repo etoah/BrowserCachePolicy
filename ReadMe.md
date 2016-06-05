@@ -209,10 +209,29 @@ exports.Expires = {
 ![img]("./assets/Last-Modified_If-Modified-Since_flow.png")
 
 
+本例子的源码为分支 step4
+
+### Etag/If-None-Match
+
+除了有Last-Modified/If-Modified-Since组合，还有Etag/if-None-Match,
+
+#### 什么是Etag
+ETag ,全称Entity Tag.
 
 
 
+Etag/If-None-Match也要配合Cache-Control使用。
+-  Etag：web服务器响应请求时，告诉浏览器当前资源在服务器的唯一标识（生成规则由服务器决定）。Apache中，ETag的值，默认是对文件的索引节（INode），大小（Size）和最后修改时间（MTime）进行Hash后得到的。
+-  If-None-Match：当资源过期时（使用Cache-Control标识的max-age），发现资源具有Etage声明，则再次向web服务器请求时带上头If-None-Match （Etag的值）。
+web服务器收到请求后发现有头If-None-Match 则与被请求资源的相应校验串进行比对，决定返回200或304。
 
+#### 为什么有了Last-Modified还要Etag
+
+
+你可能会觉得使用Last-Modified已经足以让浏览器知道本地的缓存副本是否足够新，为什么还需要Etag（实体标识）呢？HTTP1.1中Etag的出现主要是为了解决几个Last-Modified比较难解决的问题：
+-  Last-Modified标注的最后修改只能精确到秒级，如果某些文件在1秒钟以内，被修改多次的话，它将不能准确标注文件的修改时间
+-  如果某些文件会被定期生成，当有时内容并没有任何变化，但Last-Modified却改变了，导致文件没法使用缓存
+-  有可能存在服务器没有准确获取文件修改时间，或者与代理服务器时间不一致等情形
 
 
 
