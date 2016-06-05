@@ -19,51 +19,43 @@ module.exports = function (request, response, next) {
         response.setHeader("Expires", expires.toUTCString());
         response.setHeader("Cache-Control", "max-age=" + config.Expires.maxAge);
 
-        if (request.headers['if-none-match']) {
 
-            fs.readFile(realPath, 'binary', function (err, file) {
+
+        fs.stat(realPath, function (err, stat) {
+
+            var lastModified = stat.mtime.toUTCString();
+
+            var ifModifiedSince = "If-Modified-Since".toLowerCase();
+
+            response.setHeader("Last-Modified", lastModified);
+
+
+            fs.readFile(realPath, 'binary', function (err, file) {   // 为了使代码简单，这是里与stat是串行读取,  同时与后面的next读取了文件两次可以优化
                 if (err) {
                     response.writeHead(500, { 'Content-Type': 'text/plain' });
                     return response.end(err);
                 } else {
                     var hash = crypto.createHash('md5').update(file).digest('base64');
-                    if (request.headers['if-none-match'] === hash) {
+                    response.setHeader("Etag", hash);
+                    if (
+                        (request.headers['if-none-match'] && request.headers['if-none-match'] === hash)
+                        // ||
+                        // (request.headers[ifModifiedSince] && new Date(lastModified) <= new Date(request.headers[ifModifiedSince]))
+                    ) {
                         response.writeHead(304, "Not Modified");
                         response.end();
                         return;
                     }
-                    response.writeHead(200, {
-                        'Content-Type': 'text/plain',
-                        "Etag": hash
-                    });
-
-                    response.write(file, "binary");
-
-                    return response.end();
+                    else {
+                        next();
+                    }
                 }
             });
-        }
-        else {
-            fs.stat(realPath, function (err, stat) {
 
-                var lastModified = stat.mtime.toUTCString();
 
-                var ifModifiedSince = "If-Modified-Since".toLowerCase();
 
-                response.setHeader("Last-Modified", lastModified);
+        })
 
-                if (request.headers[ifModifiedSince] && new Date(lastModified) <= new Date(request.headers[ifModifiedSince])) {
-
-                    response.writeHead(304, "Not Modified");
-
-                    response.end();
-
-                }
-                else {
-                    next();
-                }
-            })
-        }
 
 
 

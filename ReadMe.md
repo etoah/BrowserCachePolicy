@@ -270,11 +270,10 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 配置时，也可能不是配置express，很可能配的是nginx ，关于配置的实战篇，下次更新。
  
 
-Reference
+### Reference
 [W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
-
-
-
+[rfc2616](http://www.ietf.org/rfc/rfc2616.txt)
+[What takes precedence: the ETag or Last-Modified HTTP header?](http://stackoverflow.com/questions/824152/what-takes-precedence-the-etag-or-last-modified-http-header)
 
 
 

@@ -39,15 +39,9 @@ var server = http.createServer(function (request, response) {
                         response.writeHead(500, { 'Content-Type': contentType });
                         response.end(err);
                     } else {
-                        var hash = crypto.createHash('md5').update(file).digest('base64');
-                        if (request.headers['if-none-match'] === hash) {
-                            response.writeHead(304, "Not Modified");
-                            response.end();
-                            return;
-                        }
+
                         response.writeHead(200, {
                             'Content-Type': contentType,
-                            "Etag": hash
                         });
                         response.write(file, "binary");
                         response.end();
