@@ -1,15 +1,32 @@
 
+
+##背景
+
+在对页面的性能优化时，缓存是非常重要的一环，
+
+浏览器缓存机制设置众多：html5 appcache，Expires，Cache-control，Last-Modified/If-Modified-Since，Etag/If-None-Match，max-age=0/no-cache...,
+之前对某一个或几个特性了解一二，但是混在一起再加上浏览器的行为，就迷（meng）糊(bi)了.
+
+本文从实现一个简单的静态服务器角度，一步一步说浏览器的缓存策略。
+
+
+
+
 ## 浏览器缓存总流程图
 
 
+对http请求来说，客户端缓存分三类：
 
-
-总的来说，客户端缓存分三类：
-
-- 不发任何请求，直接从缓存中取数据，代表的特性有： Expires ，Cache-Control=<number>和appcache
+- 不发任何请求，直接从缓存中取数据，代表的特性有： Expires ，Cache-Control=<number！=0>和appcache
 - 发请求确认是否新鲜，再决定是否从缓存中取数据 :代表的特性有：Last-Modified/If-Modified-Since，Etag/If-None-Match
-- 没有缓存，代表的特性有：Cache-Control：max-age=0/no-cache
+- 没有缓存，代表的特性有：Cache-Control：max-age=0/no-cache，直接发送请求
 
+
+以下是最终的流程图：
+
+源码和流程图源文件在本人[github](https://github.com/etoah/BrowserCachePolicy)
+
+![img](./assets/finalized.png)
 
 
 
@@ -234,28 +251,37 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 由上面的目的，很容易想到怎么实现，只要对文件内容哈希即可。
 哈希会用到node 中的Crypto模块 ，先引用`var crypto = require('crypto');`，并在响应时加上Etag:
 
-```javascript
-        var hash = crypto.createHash('md5').update(file).digest('base64');
-                        if (request.headers['if-none-match'] == hash) {
-                            response.writeHead(304, "Not Modified");
-                            response.end();
-                            return;
-                        }
-                        response.writeHead(200, {
-                            'Content-Type': contentType,
-                            "Etag": hash
-                        });
-```
-为了消除 Last-Modified/If-Modified-Since的影响，测试时可以先注释此 header
-
-
 
 
 在node 的后端框架express 中引用的是npm包[etag](https://github.com/jshttp/etag),etag 支持根据传入的参数支持两种etag的方式：
 一种是文件状态（大小，修改时间），另一种是文件内容的哈希值。
 详情可相看[源码](https://github.com/jshttp/etag/blob/master/index.js)
 
+```javascript
+var hash = crypto.createHash('md5').update(file).digest('base64');
+                    response.setHeader("Etag", hash);
+                    if (
+                        (request.headers['if-none-match'] && request.headers['if-none-match'] === hash)
+                        // ||
+                        // (request.headers[ifModifiedSince] && new Date(lastModified) <= new Date(request.headers[ifModifiedSince]))
+                    ) {
+                        response.writeHead(304, "Not Modified");
+                        response.end();
+                        return;
+                    }
+```
+为了消除 Last-Modified/If-Modified-Since的影响，测试时可以先注释此 header，这里写的是 strong validator，详细可查看[W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
+第二次访问时，正常的返回304，并读取缓存
 
+![img]("./assets/etagmatch.jpg")
+
+更改文件，etag发生不匹配，返回200
+
+![img]("./assets/etagnonematch.jpg")
+
+最终的流程图
+
+![img](./assets/finalized.png)
 
 ## 其它
 
