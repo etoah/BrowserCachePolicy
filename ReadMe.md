@@ -1,6 +1,5 @@
 
 ##TOC
-
 - 背景
 - 浏览器的总流程图
 - 一步一步说缓存 
@@ -17,13 +16,11 @@
 
 ##背景
 
-在对页面的性能优化时，缓存是非常重要的一环，
-
+在对页面的性能优化时，特别是移动端的优化，缓存是非常重要的一环。  
 浏览器缓存机制设置众多：html5 appcache，Expires，Cache-control，Last-Modified/If-Modified-Since，Etag/If-None-Match，max-age=0/no-cache...,
 之前对某一个或几个特性了解一二，但是混在一起再加上浏览器的行为，就迷（meng）糊(bi)了.
 
 下面从实现一个简单的静态服务器角度，一步一步说浏览器的缓存策略。
-
 
 ## 浏览器缓存总流程图
 
@@ -34,7 +31,7 @@
 - 发请求确认是否新鲜，再决定是否返回304并从缓存中取数据 :代表的特性有：Last-Modified/If-Modified-Since，Etag/If-None-Match
 - 直接发送请求， 没有缓存，代表的特性有：Cache-Control：max-age=0/no-cache
 
-以下是最终的流程图：
+时间宝贵，以下是最终的流程图：
 
 源码和流程图源文件在[github](https://github.com/etoah/BrowserCachePolicy)
 
@@ -48,8 +45,7 @@
 不到60行就把一个可用的版本实现了：[源码](https://github.com/etoah/BrowserCachePolicy/tree/step1) 
 克隆代码，分支切换到step1, 进入根目录，执行 `node app.js`,浏览器里输入：http://localhost:8888/index.html
 
-查看response header,返回正常，也没有用任何缓存。。服务器每次都要调用fs.readFile方法去读取硬盘上的文件的。当服务器的请求量一上涨，硬盘IO会吃不消的。 
-
+查看response header,返回正常，也没有用任何缓存。服务器每次都要调用fs.readFile方法去读取硬盘上的文件的。当服务器的请求量一上涨，硬盘IO会成为性能瓶颈（设置了内存缓存除外）。 
 
 ```
 response header:
@@ -63,7 +59,6 @@ Transfer-Encoding: chunked
 ![image](https://cloud.githubusercontent.com/assets/7630567/15781552/40d604d6-29d9-11e6-845c-71c0a522006d.png)
 
 ###  设置缓存超时时间
-
 
 对于指定后缀文件和过期日期，为了保证可配置。建立一个config.js。
 
@@ -142,7 +137,6 @@ Accept-Language: zh-CN,zh;q=0.8
 
 查看request header 发现 Cache-Control: max-age=0
 
-
 查看文档发现：
 >Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
 
@@ -175,6 +169,9 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 在浏览器输入：http://localhost:8888/entry.html，可以看到appcache ,已经在缓存文件了：     
 ![img](./assets/appcache.jpg)
 
+从浏览器的Resources标签也可以看到已缓存的文件：   
+![img](./assets/appcache.res.jpg)
+
 这时再刷新浏览器,可以看到即使没有 Expires 和Cache-Control 也是 from cache ,   
 
 ![img](./assets/appcache.header.jpg)
@@ -195,15 +192,10 @@ Last-Modified/If-Modified-Since要配合Cache-Control使用。
 
 所以我们需要把 Cache-Control 设置的尽可能的短,让资源过期:
 ```javascript
-
 exports.Expires = {
-
     fileMatch: /^(gif|png|jpg|js|css|html)$/ig,
-
     maxAge: 1
-
 };
-
 ```
 
 同时需要识别出文件的最后修改时间,并返回给客户端,我们同时也要检测浏览器是否发送了If-Modified-Since请求头。如果发送而且跟文件的修改时间相同的话，我们返回304状态。 
@@ -254,7 +246,6 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 -  如果某些文件会被定期生成，当有时内容并没有任何变化，但Last-Modified却改变了，导致文件没法使用缓存
 -  有可能存在服务器没有准确获取文件修改时间，或者与代理服务器时间不一致等情形
 
-
 #### Etag 的实现
 
 在node 的后端框架express 中引用的是npm包[etag](https://github.com/jshttp/etag),etag 支持根据传入的参数支持两种etag的方式：
@@ -263,7 +254,6 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 
 由上面的目的，也很容易想到怎么简单实现，这里我们对文件内容哈希得到Etag值。
 哈希会用到node 中的Crypto模块 ，先引用`var crypto = require('crypto');`，并在响应时加上Etag:
-
 ```javascript
 var hash = crypto.createHash('md5').update(file).digest('base64');
                     response.setHeader("Etag", hash);
@@ -286,18 +276,16 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 
 ![img](./assets/etagnonematch.jpg)
 
-最终的流程图
+
+还有一部份功能特性，由于支持度不广（部份客户端不支持（chrome,firefox，缓存代理服务器）不支持，或主流服务器不支持，如nginx, Appache）没有特别的介绍。
+到这里最终主要的浏程图已完毕，最终的流程图
 
 ![img](./assets/finalized.png)
 
-最终代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/master) 
-
-## 其它
-
-还有一部份功能特性，由于支持度不广（部份浏览器不支持，或主流服务器不支持，如nginx, Appache）没有特别的介绍。
+最终代码可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/master) 
 
 
-### 迷之浏览器
+## 迷之浏览器
 每个浏览器对用户行为(F5,Ctrl+F5,地址栏回车等)的处理都不一样,详细请查看[Clientside Cache Control](http://techblog.tilllate.com/2008/11/14/clientside-cache-control/)
 以下摘抄一段:
 >So I tried this for different browsers. Unfortunately it’s specified nowhere what a browser has to send in which situation.
@@ -311,11 +299,13 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 
 ### 总结
 
-这只是一篇原理或是规则性的文章，但现实应用可能只用到了很少的一部份特性就能达到较好的效果：
-比如，我们只到在打包的时候用gulp生成md5戳或时间戳，过期时间设置为10年，更新版本时更新戳，缓存策略简单高效。
-配置时，也可能不是配置express，很可能配的是nginx ，关于配置的实战篇，下次往篇更新。
+这只是一篇原理或是规则性的文章，初看起来比较复杂，但现实应用可能只用到了很少的一部份特性就能达到较好的效果：
+我们只需在打包的时候用gulp生成md5戳或时间戳，过期时间设置为10年，更新版本时更新戳，缓存策略简单高效。
+关于缓存配置的实战这些问题，
+比如，appcache,Expires/Cache-Control 都是不需发任何请求，适用于什么场景，怎么选择？
+配置时，不是配置express，配的是nginx，怎么配置 ，下篇《详说浏览器缓存-实战篇》更新。
  
-
+ 
 ### Reference
 [W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
 [rfc2616](http://www.ietf.org/rfc/rfc2616.txt)
