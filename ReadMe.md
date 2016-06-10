@@ -1,4 +1,19 @@
 
+##TOC
+
+- 背景
+- 浏览器的总流程图
+- 一步一步说缓存 
+    - 朴素的静态服务器
+    - 设置缓存超时时间
+    - html5 Application Cache
+    - Last-Modified/If-Modified-Since
+    - Etag/If-None-Match
+        - 什么是Etag
+        - 为什么有了Last-Modified还要Etag
+        - Etag 的实现
+- 迷之浏览器
+- 总结
 
 ##背景
 
@@ -7,9 +22,7 @@
 浏览器缓存机制设置众多：html5 appcache，Expires，Cache-control，Last-Modified/If-Modified-Since，Etag/If-None-Match，max-age=0/no-cache...,
 之前对某一个或几个特性了解一二，但是混在一起再加上浏览器的行为，就迷（meng）糊(bi)了.
 
-本文从实现一个简单的静态服务器角度，一步一步说浏览器的缓存策略。
-
-
+下面从实现一个简单的静态服务器角度，一步一步说浏览器的缓存策略。
 
 
 ## 浏览器缓存总流程图
@@ -18,25 +31,22 @@
 对http请求来说，客户端缓存分三类：
 
 - 不发任何请求，直接从缓存中取数据，代表的特性有： Expires ，Cache-Control=<number！=0>和appcache
-- 发请求确认是否新鲜，再决定是否从缓存中取数据 :代表的特性有：Last-Modified/If-Modified-Since，Etag/If-None-Match
-- 没有缓存，代表的特性有：Cache-Control：max-age=0/no-cache，直接发送请求
-
+- 发请求确认是否新鲜，再决定是否返回304并从缓存中取数据 :代表的特性有：Last-Modified/If-Modified-Since，Etag/If-None-Match
+- 直接发送请求， 没有缓存，代表的特性有：Cache-Control：max-age=0/no-cache
 
 以下是最终的流程图：
 
-源码和流程图源文件在本人[github](https://github.com/etoah/BrowserCachePolicy)
+源码和流程图源文件在[github](https://github.com/etoah/BrowserCachePolicy)
 
 ![img](./assets/finalized.png)
 
 
-
-## 一步一步说缓存
+## 一步一步说缓存 
 
 ### 朴素的静态服务器
-浏览的缓存的依据是server http response header , 为了实现对http response 的完全控制，本文用nodejs实现了一个简单的static 服务器，得益于nodejs简单高效的api,
-不到60行就把一个可用的版本实现了：[源码](https://github.com/etoah/BrowserCachePolicy/step1)
-
-浏览器里输入：http://localhost:8888/index.html
+浏览的缓存的依据是server http response header , 为了实现对http response 的完全控制，用nodejs实现了一个简单的static 服务器，得益于nodejs简单高效的api,
+不到60行就把一个可用的版本实现了：[源码](https://github.com/etoah/BrowserCachePolicy/tree/step1) 
+克隆代码，分支切换到step1, 进入根目录，执行 `node app.js`,浏览器里输入：http://localhost:8888/index.html
 
 查看response header,返回正常，也没有用任何缓存。。服务器每次都要调用fs.readFile方法去读取硬盘上的文件的。当服务器的请求量一上涨，硬盘IO会吃不消的。 
 
@@ -52,7 +62,7 @@ Transfer-Encoding: chunked
 
 ![image](https://cloud.githubusercontent.com/assets/7630567/15781552/40d604d6-29d9-11e6-845c-71c0a522006d.png)
 
-###  设置超时时间
+###  设置缓存超时时间
 
 
 对于指定后缀文件和过期日期，为了保证可配置。建立一个config.js。
@@ -146,7 +156,7 @@ Accept-Language: zh-CN,zh;q=0.8
 Cache-Control与Expires的作用一致，都是指明当前资源的有效期，控制浏览器是否直接从浏览器缓存取数据还是重新发请求到服务器取数据。
 只不过Cache-Control的选择更多，设置更细致，如果同时设置的话，其优先级高于Expires。
 
-
+代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/step2) 
 
 ### html5 Application Cache
 
@@ -175,7 +185,7 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 
 ![img](./assets/norequestcache.png)
 
-本例子的源码为分支 step3
+本例子的源码为分支 step3：代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/step3) 
 
 ### Last-Modified/If-Modified-Since
 
@@ -214,19 +224,18 @@ exports.Expires = {
 
 同样我们清缓存,刷新两次就能看到效果如下:
 
-![img](./assets/Last-Modified_If-Modified-Since.jpg)
+![img](./assets/Last-Modified_If-Modified-Since.JPG)
 
 服务器请求确认了文件是否新鲜,直接返回header, 网络负载特别较小:
 
 ![img](./assets/304size.jpg)
 
-
 这时我们的缓存控制流程图如下:
 
-![img]("./assets/Last-Modified_If-Modified-Since_flow.png")
+![img](./assets/Last-Modified_If-Modified-Since_flow.png)
 
 
-本例子的源码为分支 step4
+本例子的源码为分支 step4：代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/step4) 
 
 ### Etag/If-None-Match
 
@@ -248,14 +257,12 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 
 #### Etag 的实现
 
-由上面的目的，很容易想到怎么实现，只要对文件内容哈希即可。
-哈希会用到node 中的Crypto模块 ，先引用`var crypto = require('crypto');`，并在响应时加上Etag:
-
-
-
 在node 的后端框架express 中引用的是npm包[etag](https://github.com/jshttp/etag),etag 支持根据传入的参数支持两种etag的方式：
 一种是文件状态（大小，修改时间），另一种是文件内容的哈希值。
 详情可相看[源码](https://github.com/jshttp/etag/blob/master/index.js)
+
+由上面的目的，也很容易想到怎么简单实现，这里我们对文件内容哈希得到Etag值。
+哈希会用到node 中的Crypto模块 ，先引用`var crypto = require('crypto');`，并在响应时加上Etag:
 
 ```javascript
 var hash = crypto.createHash('md5').update(file).digest('base64');
@@ -273,27 +280,40 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 为了消除 Last-Modified/If-Modified-Since的影响，测试时可以先注释此 header，这里写的是 strong validator，详细可查看[W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
 第二次访问时，正常的返回304，并读取缓存
 
-![img]("./assets/etagmatch.jpg")
+![img](./assets/etagmatch.jpg)
 
 更改文件，etag发生不匹配，返回200
 
-![img]("./assets/etagnonematch.jpg")
+![img](./assets/etagnonematch.jpg)
 
 最终的流程图
 
 ![img](./assets/finalized.png)
+
+最终代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/master) 
 
 ## 其它
 
 还有一部份功能特性，由于支持度不广（部份浏览器不支持，或主流服务器不支持，如nginx, Appache）没有特别的介绍。
 
 
+### 迷之浏览器
+每个浏览器对用户行为(F5,Ctrl+F5,地址栏回车等)的处理都不一样,详细请查看[Clientside Cache Control](http://techblog.tilllate.com/2008/11/14/clientside-cache-control/)
+以下摘抄一段:
+>So I tried this for different browsers. Unfortunately it’s specified nowhere what a browser has to send in which situation.
+- Internet Explorer 6 and 7 do both send only cache refresh hints on ctrl+F5. On ctrl+F5 they both send the header field ‘Cache-Control’ set to ‘no-cache’.
+- Firefox 3 do send the header field ‘Cache-Control’ with the value ‘max-age=0′ if the user press f5. If you press ctrl+f5 Firefox sends the ‘Cache-Control’ with ‘no-cache’ (hey it do the same as IE!) and send also a field ‘Pragma’ which is also set to ‘no-cache’.
+- Firefox 2 does send the header field ‘Cache-Control’ with the value ‘max-age=0′ if the user press f5. ctrl+f5 does not work.
+- Opera/9.62 does send ‘Cache-Control’ with the value ‘max-age=0′ after f5 and ctrl+f5 does not work.
+- Safari 3.1.2 behaves like Opera above.
+- Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
+
 
 ### 总结
 
 这只是一篇原理或是规则性的文章，但现实应用可能只用到了很少的一部份特性就能达到较好的效果：
 比如，我们只到在打包的时候用gulp生成md5戳或时间戳，过期时间设置为10年，更新版本时更新戳，缓存策略简单高效。
-配置时，也可能不是配置express，很可能配的是nginx ，关于配置的实战篇，下次更新。
+配置时，也可能不是配置express，很可能配的是nginx ，关于配置的实战篇，下次往篇更新。
  
 
 ### Reference
@@ -307,26 +327,6 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 
 
 
-
-
-
-
-
-### Browser Magic【迷之浏览器】
-
-So I tried this for different browsers. Unfortunately it’s specified nowhere what a browser has to send in which situation.
-
-- Internet Explorer 6 and 7 do both send only cache refresh hints on ctrl+F5. On ctrl+F5 they both send the header field ‘Cache-Control’ set to ‘no-cache’.
-
-- Firefox 3 do send the header field ‘Cache-Control’ with the value ‘max-age=0′ if the user press f5. If you press ctrl+f5 Firefox sends the ‘Cache-Control’ with ‘no-cache’ (hey it do the same as IE!) and send also a field ‘Pragma’ which is also set to ‘no-cache’.
-
-- Firefox 2 does send the header field ‘Cache-Control’ with the value ‘max-age=0′ if the user press f5. ctrl+f5 does not work.
-
-- Opera/9.62 does send ‘Cache-Control’ with the value ‘max-age=0′ after f5 and ctrl+f5 does not work.
-
-- Safari 3.1.2 behaves like Opera above.
-
-- Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
 
 
 
