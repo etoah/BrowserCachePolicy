@@ -43,9 +43,8 @@
 ### 朴素的静态服务器
 浏览的缓存的依据是server http response header , 为了实现对http response 的完全控制，用nodejs实现了一个简单的static 服务器，得益于nodejs简单高效的api,
 不到60行就把一个可用的版本实现了：[源码](https://github.com/etoah/BrowserCachePolicy/tree/step1) 
-克隆代码，分支切换到step1, 进入根目录，执行 `node app.js`,浏览器里输入：http://localhost:8888/index.html
-
-查看response header,返回正常，也没有用任何缓存。服务器每次都要调用fs.readFile方法去读取硬盘上的文件的。当服务器的请求量一上涨，硬盘IO会成为性能瓶颈（设置了内存缓存除外）。 
+可克隆代码，分支切换到step1, 进入根目录，执行 `node app.js`,浏览器里输入：http://localhost:8888/index.html，查看response header,返回正常，也没有用任何缓存。   
+服务器每次都要调用fs.readFile方法去读取硬盘上的文件的。当服务器的请求量一上涨，硬盘IO会成为性能瓶颈（设置了内存缓存除外）。 
 
 ```
 response header:
@@ -137,7 +136,7 @@ Accept-Language: zh-CN,zh;q=0.8
 
 查看request header 发现 Cache-Control: max-age=0
 
-查看文档发现：
+查看文档：
 >Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
 
 所以做了一个entry,通过链接跳转的方式进入就可以看到cache的效果了。
