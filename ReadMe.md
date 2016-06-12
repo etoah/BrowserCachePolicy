@@ -118,7 +118,7 @@ Remote Address:127.0.0.1:8888
 ![image](https://cloud.githubusercontent.com/assets/7630567/15796041/2eb5e414-2a2a-11e6-9395-7a7db2451db1.png)
 
 
-但是到这里遇到一个问题，并没有达到预期的效果，
+但是到这里遇到一个问题，并没有达到预期的效果，并没有从缓存读取
 
 缓存并没有生效。
 
@@ -134,14 +134,15 @@ Accept-Encoding: gzip, deflate, sdch
 Accept-Language: zh-CN,zh;q=0.8
 ```
 
-查看request header 发现 Cache-Control: max-age=0
+查看request header 发现 Cache-Control: max-age=0，浏览器强制不用缓存。
 
-查看文档：
+浏览器会针对的用户不同行为采用不同的缓存策略：
 >Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
-
-所以做了一个entry,通过链接跳转的方式进入就可以看到cache的效果了。
-
 其它的浏览器特性可以查看文末的【迷之浏览器】
+
+所以添加文件entry.html,通过链接跳转的方式进入就可以看到cache的效果了。
+
+
 
 浏览器在发送请求之前由于检测到Cache-Control和Expires（Cache-Control的优先级高于Expires，但有的浏览器不支持Cache-Control，这时采用Expires），
 如果没有过期，则不会发送请求，而直接从缓存中读取文件。 
@@ -149,7 +150,7 @@ Accept-Language: zh-CN,zh;q=0.8
 Cache-Control与Expires的作用一致，都是指明当前资源的有效期，控制浏览器是否直接从浏览器缓存取数据还是重新发请求到服务器取数据。
 只不过Cache-Control的选择更多，设置更细致，如果同时设置的话，其优先级高于Expires。
 
-代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/step2) 
+代码详细可查看[源码:https://github.com/etoah/BrowserCachePolicy/tree/step2](https://github.com/etoah/BrowserCachePolicy/tree/step2) 
 
 ### html5 Application Cache
 
@@ -226,7 +227,7 @@ exports.Expires = {
 ![img](./assets/Last-Modified_If-Modified-Since_flow.png)
 
 
-本例子的源码为分支 step4：代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/step4) 
+本例子的源码为分支 step4：代码详细可查看[源码:https://github.com/etoah/BrowserCachePolicy/tree/step4](https://github.com/etoah/BrowserCachePolicy/tree/step4) 
 
 ### Etag/If-None-Match
 
@@ -249,7 +250,7 @@ web服务器收到请求后发现有头If-None-Match 则与被请求资源的相
 
 在node 的后端框架express 中引用的是npm包[etag](https://github.com/jshttp/etag),etag 支持根据传入的参数支持两种etag的方式：
 一种是文件状态（大小，修改时间），另一种是文件内容的哈希值。
-详情可相看[源码](https://github.com/jshttp/etag/blob/master/index.js)
+详情可相看[etag源码](https://github.com/jshttp/etag/blob/master/index.js)
 
 由上面的目的，也很容易想到怎么简单实现，这里我们对文件内容哈希得到Etag值。
 哈希会用到node 中的Crypto模块 ，先引用`var crypto = require('crypto');`，并在响应时加上Etag:
@@ -277,7 +278,7 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 
 
 还有一部份功能特性，由于支持度不广（部份客户端不支持（chrome,firefox，缓存代理服务器）不支持，或主流服务器不支持，如nginx, Appache）没有特别的介绍。
-到这里最终主要的浏程图已完毕，最终的流程图
+到这里最终主要的浏程图已完毕，最终的流程图:
 
 ![img](./assets/finalized.png)
 
