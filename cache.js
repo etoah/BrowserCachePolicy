@@ -14,7 +14,7 @@ module.exports = function (request, response) {
         expires.setTime(expires.getTime() + config.Expires.maxAge * 1000);
 
         response.setHeader("Expires", expires.toUTCString());
-        //response.setHeader("Cache-Control", "max-age=" + config.Expires.maxAge);
+        response.setHeader("Cache-Control", "max-age=" + config.Expires.maxAge);
 
     }
 }
