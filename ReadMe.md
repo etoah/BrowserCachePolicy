@@ -156,6 +156,7 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 
 除了Expires 和Cache-Control 两个特性的缓存可以让browser完全不发请求的话，别忘了还有一个html5的新特性 `Application Cache`,
 在我的另一篇文章中有简单的介绍[HTML5 Application cache初探和企业应用启示](http://www.cnblogs.com/etoah/p/4931903.html).
+同时在自己写的[代码编辑器](https://github.com/etoah/Lucien)中,也用到了此特性，可离线查看，坑也比较多。
 
 为了消除 expires cache-control 的影响，先注释掉这两行，并消除浏览器的缓存。
 ``` javascript
@@ -307,9 +308,9 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
  
  
 ### Reference
-[W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
-[rfc2616](http://www.ietf.org/rfc/rfc2616.txt)
-[What takes precedence: the ETag or Last-Modified HTTP header?](http://stackoverflow.com/questions/824152/what-takes-precedence-the-etag-or-last-modified-http-header)
+[W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)    
+[rfc2616](http://www.ietf.org/rfc/rfc2616.txt)   
+[What takes precedence: the ETag or Last-Modified HTTP header?](http://stackoverflow.com/questions/824152/what-takes-precedence-the-etag-or-last-modified-http-header)   
 
 
 
