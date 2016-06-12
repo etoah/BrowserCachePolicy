@@ -187,7 +187,7 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 
 ### Last-Modified/If-Modified-Since
 
-Last-Modified/If-Modified-Since要配合Cache-Control使用。
+Last-Modified/If-Modified-Since。
 -  Last-Modified：标示这个响应资源的最后修改时间。web服务器在响应请求时，告诉浏览器资源的最后修改时间。
 -  If-Modified-Since：当资源过期时（使用Cache-Control标识的max-age），发现资源具有Last-Modified声明，则再次向web服务器请求时带上头 If-Modified-Since，表示请求时间。web服务器收到请求后发现有头If-Modified-Since 则与被请求资源的最后修改时间进行比对。若最后修改时间较新，说明资源又被改动过，则响应整片资源内容（写在响应消息包体内），HTTP 200；若最后修改时间较旧，说明资源无新修改，则响应HTTP 304 (无需包体，节省浏览)，告知浏览器继续使用所保存的cache。
 
@@ -235,7 +235,7 @@ exports.Expires = {
 除了有Last-Modified/If-Modified-Since组合，还有Etag/if-None-Match,
 
 #### 什么是Etag
-ETag ,全称Entity Tag. Etag/If-None-Match也要配合Cache-Control使用。
+ETag ,全称Entity Tag.
 -  Etag：web服务器响应请求时，告诉浏览器当前资源在服务器的唯一标识（生成规则由服务器决定，具体下文中介绍）。
 -  If-None-Match：当资源过期时（使用Cache-Control标识的max-age），发现资源具有Etage声明，则再次向web服务器请求时带上头If-None-Match （Etag的值）。
 web服务器收到请求后发现有头If-None-Match 则与被请求资源的相应校验串进行比对，决定返回200或304。
