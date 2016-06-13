@@ -137,7 +137,7 @@ Accept-Language: zh-CN,zh;q=0.8
 查看request header 发现 Cache-Control: max-age=0，浏览器强制不用缓存。
 
 浏览器会针对的用户不同行为采用不同的缓存策略：
->Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
+>Chrome does something quite different: 'Cache-Control' is always set to 'max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
 其它的浏览器特性可以查看文末的【迷之浏览器】
 
 所以添加文件entry.html,通过链接跳转的方式进入就可以看到cache的效果了。
@@ -217,7 +217,7 @@ exports.Expires = {
 
 同样我们清缓存,刷新两次就能看到效果如下:
 
-![img](./assets/Last-Modified_If-Modified-Since.JPG)
+![img](./assets/Last-Modified_If-Modified-Since.jpg)
 
 服务器请求确认了文件是否新鲜,直接返回header, 网络负载特别较小:
 
@@ -289,13 +289,13 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 ## 迷之浏览器
 每个浏览器对用户行为(F5,Ctrl+F5,地址栏回车等)的处理都不一样,详细请查看[Clientside Cache Control](http://techblog.tilllate.com/2008/11/14/clientside-cache-control/)
 以下摘抄一段:
->So I tried this for different browsers. Unfortunately it’s specified nowhere what a browser has to send in which situation.
-- Internet Explorer 6 and 7 do both send only cache refresh hints on ctrl+F5. On ctrl+F5 they both send the header field ‘Cache-Control’ set to ‘no-cache’.
-- Firefox 3 do send the header field ‘Cache-Control’ with the value ‘max-age=0′ if the user press f5. If you press ctrl+f5 Firefox sends the ‘Cache-Control’ with ‘no-cache’ (hey it do the same as IE!) and send also a field ‘Pragma’ which is also set to ‘no-cache’.
-- Firefox 2 does send the header field ‘Cache-Control’ with the value ‘max-age=0′ if the user press f5. ctrl+f5 does not work.
-- Opera/9.62 does send ‘Cache-Control’ with the value ‘max-age=0′ after f5 and ctrl+f5 does not work.
+>So I tried this for different browsers. Unfortunately it's specified nowhere what a browser has to send in which situation.
+- Internet Explorer 6 and 7 do both send only cache refresh hints on ctrl+F5. On ctrl+F5 they both send the header field 'Cache-Control' set to 'no-cache'.
+- Firefox 3 do send the header field 'Cache-Control' with the value 'max-age=0′ if the user press f5. If you press ctrl+f5 Firefox sends the 'Cache-Control' with 'no-cache' (hey it do the same as IE!) and send also a field 'Pragma' which is also set to 'no-cache'.
+- Firefox 2 does send the header field 'Cache-Control' with the value 'max-age=0′ if the user press f5. ctrl+f5 does not work.
+- Opera/9.62 does send 'Cache-Control' with the value 'max-age=0′ after f5 and ctrl+f5 does not work.
 - Safari 3.1.2 behaves like Opera above.
-- Chrome does something quite different: ‘Cache-Control’ is always set to ‘max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
+- Chrome does something quite different: 'Cache-Control' is always set to 'max-age=0′, no matter if you press enter, f5 or ctrl+f5. Except if you start Chrome and enter the url and press enter.
 
 
 ### 总结
