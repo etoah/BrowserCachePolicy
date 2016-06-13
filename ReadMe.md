@@ -35,7 +35,7 @@
 
 源码和流程图源文件在[github](https://github.com/etoah/BrowserCachePolicy)
 
-![img](./assets/finalized.png)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/finalized.png)
 
 
 ## 一步一步说缓存 
@@ -168,20 +168,20 @@ Cache-Control与Expires的作用一致，都是指明当前资源的有效期，
 <html lang="en" manifest="app.manifest">
 ```
 在浏览器输入：http://localhost:8888/entry.html，可以看到appcache ,已经在缓存文件了：     
-![img](./assets/appcache.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/appcache.jpg)
 
 从浏览器的Resources标签也可以看到已缓存的文件：   
-![img](./assets/appcache.res.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/appcache.res.jpg)
 
 这时再刷新浏览器,可以看到即使没有 Expires 和Cache-Control 也是 from cache ,   
 
-![img](./assets/appcache.header.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/appcache.header.jpg)
 
 而index.html 由于没有加Expires ，Cache-Control和appcache 还是直接从服务器端取文件。
 
 这时缓存的控制如下
 
-![img](./assets/norequestcache.png)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/norequestcache.png)
 
 本例子的源码为分支 step3：代码详细可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/step3) 
 
@@ -217,15 +217,15 @@ exports.Expires = {
 
 同样我们清缓存,刷新两次就能看到效果如下:
 
-![img](./assets/Last-Modified_If-Modified-Since.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/Last-Modified_If-Modified-Since.jpg)
 
 服务器请求确认了文件是否新鲜,直接返回header, 网络负载特别较小:
 
-![img](./assets/304size.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/304size.jpg)
 
 这时我们的缓存控制流程图如下:
 
-![img](./assets/Last-Modified_If-Modified-Since_flow.png)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/Last-Modified_If-Modified-Since_flow.png)
 
 
 本例子的源码为分支 step4：代码详细可查看[源码:https://github.com/etoah/BrowserCachePolicy/tree/step4](https://github.com/etoah/BrowserCachePolicy/tree/step4) 
@@ -271,17 +271,17 @@ var hash = crypto.createHash('md5').update(file).digest('base64');
 为了消除 Last-Modified/If-Modified-Since的影响，测试时可以先注释此 header，这里写的是 strong validator，详细可查看[W3C  ETag](https://tools.ietf.org/html/rfc7232#page-9)
 第二次访问时，正常的返回304，并读取缓存
 
-![img](./assets/etagmatch.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/etagmatch.jpg)
 
 更改文件，etag发生不匹配，返回200
 
-![img](./assets/etagnonematch.jpg)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/etagnonematch.jpg)
 
 
 还有一部份功能特性，由于支持度不广（部份客户端不支持（chrome,firefox，缓存代理服务器）不支持，或主流服务器不支持，如nginx, Appache）没有特别的介绍。
 到这里最终主要的浏程图已完毕，最终的流程图:
 
-![img](./assets/finalized.png)
+![img](https://raw.githubusercontent.com/etoah/BrowserCachePolicy/master/assets/finalized.png)
 
 最终代码可查看[源码](https://github.com/etoah/BrowserCachePolicy/tree/master) 
 
